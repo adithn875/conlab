@@ -1,72 +1,58 @@
-# ConLab — Concurrent Data Structures Laboratory in C++
+# ConLab — Concurrent Data Structures Laboratory
 
-**ConLab** is an educational systems programming project focused on understanding data structures, memory management, concurrency and synchronization mechanisms in modern C++.
+**ConLab** is a C++17 systems programming project focused on implementing, testing, and benchmarking sequential and concurrent data structures from scratch.
 
-The project is being developed incrementally, starting with fundamental sequential data structures and progressing towards concurrent implementations using mutexes, condition variables and atomic operations.
+The project explores memory management, object lifetime, synchronization, atomic operations, compare-and-swap, producer-consumer coordination, and performance measurement.
 
-Rather than treating concurrency as a black box, ConLab explores how these mechanisms work internally through implementation, experimentation, testing and documentation.
+Rather than treating concurrency as a black box, ConLab investigates how these mechanisms work internally through implementation and experimentation.
 
-> **Project status:** In development  
-> **Language:** C++17  
-> **Build system:** CMake
+**Project status:** Phases 1–6 implemented; Phase 7 documentation in progress.
 
 ---
 
 ## Table of Contents
 
-- [Motivation](#motivation)
-- [Project Objectives](#project-objectives)
+- [Objectives](#objectives)
 - [Technology Stack](#technology-stack)
 - [Repository Structure](#repository-structure)
-- [Current Implementation](#current-implementation)
-- [Sequential Queue Architecture](#sequential-queue-architecture)
-- [Memory Management](#memory-management)
+- [Implemented Components](#implemented-components)
 - [Building and Running](#building-and-running)
-- [Testing](#testing)
+- [Testing and Validation](#testing-and-validation)
+- [Benchmarking](#benchmarking)
+- [Engineering Concepts](#engineering-concepts)
+- [Limitations](#limitations)
 - [Development Roadmap](#development-roadmap)
-- [Learning Approach](#learning-approach)
 
 ---
 
-## Motivation
+## Objectives
 
-Understanding concurrent programming requires more than knowing how to use threads or mutexes. It requires understanding pointers, memory ownership, object lifetimes, synchronization and the problems that arise when multiple execution contexts access shared data.
+The main objectives of ConLab are:
 
-ConLab was started to build these foundations from scratch.
-
-The project begins with a linked-list-based FIFO queue to establish a strong understanding of pointers and dynamic memory allocation. It will gradually evolve into a collection of sequential and concurrent data structures.
-
-The emphasis is on understanding the engineering decisions behind each implementation rather than simply producing working code.
-
----
-
-## Project Objectives
-
-The main objectives are:
-
-- Understand pointers, references and dynamic memory allocation in C++.
-- Implement fundamental data structures from scratch.
-- Develop a practical understanding of RAII and object lifetime.
-- Explore constructors, destructors and copy semantics.
+- Understand pointers, dynamic memory allocation, and object lifetime.
+- Implement linked-list-based data structures.
+- Explore RAII, destructors, and copy semantics.
 - Understand thread safety and shared mutable state.
 - Implement synchronization using mutexes and condition variables.
-- Explore atomic operations and compare-and-swap (CAS).
-- Test concurrent behaviour under multiple execution threads.
-- Benchmark sequential and concurrent implementations.
-
----
+- Explore atomic operations and compare-and-swap.
+- Build producer-consumer systems.
+- Investigate concurrency correctness through stress testing.
+- Measure and interpret the performance of different queue configurations.
 
 ## Technology Stack
 
 | Technology | Purpose |
 |---|---|
 | C++17 | Primary programming language |
-| CMake | Build configuration |
-| AppleClang | Compiler |
+| CMake | Build system |
+| AppleClang | Compiler used for current experiments |
 | CLion | Development environment |
-| LLDB | Debugging |
-
-Additional testing and analysis tools will be introduced as the project progresses.
+| `std::thread` | Multithreading |
+| `std::mutex` | Mutual exclusion |
+| `std::condition_variable` | Thread coordination |
+| `std::atomic` | Atomic operations |
+| AddressSanitizer | Memory error detection in Debug builds |
+| `std::chrono` | Performance measurement |
 
 ---
 
@@ -76,11 +62,21 @@ Additional testing and analysis tools will be introduced as the project progress
 conlab/
 │
 ├── include/
-│   └── sequential_queue.hpp
+│   ├── sequential_queue.hpp
+│   ├── mutex_queue.hpp
+│   └── atomic_counter.hpp
 │
 ├── src/
 │   ├── main.cpp
-│   └── sequential_queue.cpp
+│   ├── sequential_queue.cpp
+│   ├── mutex_queue.cpp
+│   ├── atomic_counter.cpp
+│   └── benchmark.cpp
+│
+├── docs/
+│   └── benchmark-report.md
+│
+├── tests/
 │
 ├── CMakeLists.txt
 ├── README.md
@@ -91,147 +87,117 @@ conlab/
 
 **include/**
 
-Contains header files that declare data structures, class interfaces and public operations.
+Contains the public interfaces for the queue implementations and atomic counters.
 
 **src/**
 
-Contains the implementation of the declared classes and the program entry point.
+Contains the implementation files, test harness, and benchmark executable source.
 
-**CMakeLists.txt**
+**docs/**
 
-Defines the project configuration, compiler standard and source files required to build the executable.
+Contains engineering documentation and experimental reports.
+
+**tests/**
+
+Reserved for future independent automated test suites.
 
 ---
 
-## Current Implementation
+## Implemented Components
 
 ### 1. Sequential Queue
 
-The first data structure implemented in ConLab is a linked-list-based FIFO queue.
+A linked-list-based FIFO queue implemented from scratch.
 
-FIFO stands for **First In, First Out**: the first element inserted is the first element removed.
+FIFO means First In, First Out: the first element inserted is the first element removed.
 
-The implementation uses dynamically allocated nodes connected through pointers.
+The implementation uses:
 
-Each node contains:
+- Dynamically allocated nodes.
+- Head and tail pointers.
+- A size counter.
+- Explicit memory management.
+- Copy construction and copy assignment.
 
-```cpp
-struct Node {
-    int data;
-    Node* next;
-};
-```
+Implemented operations include:
 
-The queue maintains two pointers:
-
-- `head`: Points to the first element.
-- `tail`: Points to the last element.
-
-### 2. Implemented Operations
-
-| Operation | Description | Status |
-|---|---|---|
-| Constructor | Initializes an empty queue | Implemented |
-| `enqueue(value)` | Inserts an element at the back | Implemented |
-| `dequeue()` | Removes the front element | Implemented |
-| `is_empty()` | Checks whether the queue is empty | Implemented |
-| `display()` | Traverses and displays queue elements | Implemented |
-
-### 3. Queue Invariant
-
-The implementation maintains the following conditions:
-
-**Empty queue:**
-
-```cpp
-head == nullptr;
-tail == nullptr;
-```
-
-**Non-empty queue:**
-
-- Both `head` and `tail` point to valid nodes.
-- `head` points to the first node.
-- `tail` points to the last node.
-- `tail->next == nullptr`.
-
-These invariants are important for maintaining the correctness of queue operations.
-
----
-
-## Sequential Queue Architecture
-
-Consider inserting three elements:
-
-```cpp
-queue.enqueue(10);
-queue.enqueue(20);
-queue.enqueue(30);
-```
-
-The resulting linked list is:
-
-```text
-HEAD
- |
- v
-[10] -> [20] -> [30] -> nullptr
-                    ^
-                    |
-                   TAIL
-```
-
-### Enqueue
-
-The `enqueue()` operation inserts a new node at the end of the linked list.
-
-Two cases are handled:
-
-1. If the queue is empty, both `head` and `tail` point to the newly created node.
-2. If the queue is non-empty, the previous tail's `next` pointer is updated, and `tail` moves to the new node.
-
-### Dequeue
-
-The `dequeue()` operation removes the first node.
-
-The implementation:
-
-1. Checks whether the queue is empty.
-2. Stores the address of the current head.
-3. Moves `head` to the next node.
-4. Updates `tail` if the queue becomes empty.
-5. Deletes the old head node.
-
-This ensures that removed nodes are released rather than left allocated.
-
-### Complexity
-
-| Operation | Time Complexity |
+| Operation | Description |
 |---|---|
-| `enqueue()` | O(1) |
-| `dequeue()` | O(1) |
-| `is_empty()` | O(1) |
-| `display()` | O(n) |
+| `enqueue()` | Inserts an element at the back |
+| `dequeue()` | Removes the front element |
+| `front()` | Reads the front element |
+| `is_empty()` | Checks whether the queue is empty |
+| `size()` | Returns the number of elements |
+| `display()` | Displays queue contents |
 
-The queue maintains direct access to both its front and back, allowing insertion and removal without traversing the linked list.
+The implementation also handles empty-queue access and supports independent copies of queue contents.
 
----
+**Complexity**
 
-## Memory Management
+| Operation | Time complexity |
+|---|---|
+| Enqueue | O(1) |
+| Dequeue | O(1) |
+| Front | O(1) |
+| Is empty | O(1) |
+| Size | O(1) |
+| Display | O(n) |
 
-An important part of ConLab is understanding manual memory management.
+### 2. Mutex-Protected Concurrent Queue
 
-Nodes are dynamically allocated using `new` and released using `delete`.
+A thread-safe FIFO queue implemented using a linked list and C++ synchronization primitives.
 
-For example:
+Technologies used:
 
-```cpp
-Node* new_node = new Node(value);
-```
+- `std::mutex`
+- `std::lock_guard`
+- `std::unique_lock`
+- `std::condition_variable`
+- `std::thread`
 
-The queue must ensure that allocated nodes are eventually released.
+Implemented operations:
 
-Memory ownership, destructors and RAII are part of the upcoming implementation work.
+| Operation | Description |
+|---|---|
+| `enqueue()` | Inserts an element safely |
+| `wait_dequeue()` | Waits for an element and removes it |
+| `close()` | Closes the queue and wakes waiting consumers |
+| `size()` | Returns the current queue size |
+| `is_empty()` | Checks whether the queue is empty |
+
+The queue supports:
+
+- Multiple producers.
+- Multiple consumers.
+- Waiting consumers when the queue is empty.
+- Graceful shutdown.
+- Draining pending tasks after closure.
+- Rejection of new tasks after closure.
+
+The queue uses mutex-based synchronization. It is not lock-free.
+
+### 3. Atomic Counters and Compare-and-Swap
+
+ConLab includes three counter implementations:
+
+| Counter | Synchronization |
+|---|---|
+| `NormalCounter` | No synchronization |
+| `MutexCounter` | `std::mutex` |
+| `AtomicCounter` | `std::atomic<int>` |
+
+The atomic counter explores:
+
+- `fetch_add()`
+- `load()`
+- `compare_exchange_weak()`
+- `compare_exchange_strong()`
+- `memory_order_relaxed`
+- Default sequentially consistent atomic operations
+
+A CAS-based increment loop retries when a compare-and-swap operation fails.
+
+The normal counter is intended for single-threaded use. Concurrent unsynchronized modifications would introduce a data race.
 
 ---
 
@@ -239,9 +205,9 @@ Memory ownership, destructors and RAII are part of the upcoming implementation w
 
 ### Prerequisites
 
-- C++17-compatible compiler
-- CMake 3.20 or later
-- Git
+- C++17-compatible compiler.
+- CMake 3.20 or later.
+- Git.
 
 ### Clone the repository
 
@@ -250,121 +216,295 @@ git clone https://github.com/adithn875/conlab.git
 cd conlab
 ```
 
-### Configure the project
+### Debug build
+
+Configure:
 
 ```bash
-cmake -S . -B build
+cmake -S . -B cmake-build-debug
 ```
 
-### Build
+Build:
 
 ```bash
-cmake --build build
+cmake --build cmake-build-debug
 ```
 
-### Run
-
-On macOS or Linux:
+Run the main executable:
 
 ```bash
-./build/conlab
+./cmake-build-debug/conlab
 ```
+
+On Apple platforms, the Debug configuration enables AddressSanitizer through CMake.
+
+### Release build
+
+Configure:
+
+```bash
+cmake -S . -B cmake-build-release \
+  -DCMAKE_BUILD_TYPE=Release
+```
+
+Build:
+
+```bash
+cmake --build cmake-build-release
+```
+
+Run:
+
+```bash
+./cmake-build-release/conlab
+```
+
+### Run the benchmark
+
+```bash
+./cmake-build-release/conlab_benchmark
+```
+
+The project provides two executable targets:
+
+| Target | Purpose |
+|---|---|
+| `conlab` | Main implementation and test harness |
+| `conlab_benchmark` | Queue performance experiments |
 
 ---
 
-## Testing
+## Testing and Validation
 
-The current implementation has been manually tested using the program entry point.
+ConLab uses implementation-specific test harnesses and concurrent stress tests.
+
+### Sequential Queue
 
 Verified scenarios include:
 
-- Creating an empty queue.
-- Checking the empty state.
-- Inserting multiple elements.
-- Removing the front element.
-- Removing the only element from a queue.
-- Checking the empty state after removal.
+- Empty queue behaviour.
+- Enqueue and dequeue operations.
+- FIFO ordering.
+- Front access.
+- Queue size.
+- Copy construction.
+- Copy assignment.
+- Independent queue copies.
+- Memory cleanup.
 
-Automated unit tests, edge-case coverage and concurrency stress tests are planned.
+### Concurrent Queue
+
+Verified scenarios include:
+
+- Single producer and single consumer.
+- Multiple producers and consumers.
+- Consumers waiting on an empty queue.
+- Queue closure.
+- Consumers draining pending tasks after closure.
+- Rejection of enqueue operations after closure.
+
+### Producer-Consumer Stress Testing
+
+The implementation was tested using different configurations:
+
+| Producers | Consumers | Tasks |
+|---:|---:|---:|
+| 1 | 1 | 20,000 |
+| 2 | 4 | 40,000 |
+| 8 | 2 | 160,000 |
+
+Validation checks include:
+
+- Missing task detection.
+- Duplicate task detection.
+- Invalid task detection.
+- Failed enqueue detection.
+- Final queue size.
+
+Ten repeated stress-test runs were also performed with eight producers and four consumers, processing 1.6 million tasks in total.
+
+All reported runs passed their validation checks.
+
+### Atomic Counter
+
+Tested operations include:
+
+- Sequential increments.
+- Concurrent mutex-protected increments.
+- Concurrent atomic increments.
+- CAS success and failure cases.
+- CAS-based concurrent increments.
+- Relaxed atomic increments.
+
+The concurrent counter experiments used four threads with 100,000 increments per thread.
+
+---
+
+## Benchmarking
+
+ConLab includes a dedicated benchmark executable to investigate queue performance.
+
+### Benchmark configurations
+
+| Configuration | Producers | Consumers |
+|---|---:|---:|
+| Sequential queue | 1 | 1 |
+| Mutex queue | 1 | 1 |
+| Mutex queue | 2 | 2 |
+| Mutex queue | 4 | 4 |
+| Mutex queue | 8 | 4 |
+
+Each configuration processes 100,000 tasks per repetition and is executed 15 times.
+
+### Experimental environment
+
+| Property | Value |
+|---|---|
+| Operating system | macOS |
+| Compiler | Apple LLVM 21.0.0 |
+| Language standard | C++17 |
+| Build configuration | Release |
+| Reported hardware concurrency | 10 |
+| Repetitions | 15 |
+
+### Benchmark results
+
+| Configuration | Average (ms) | Median (ms) | Std. Dev. (ms) | CV (%) | Throughput (tasks/s) |
+|---|---:|---:|---:|---:|---:|
+| Sequential | 6.30 | 6.36 | 0.24 | 3.88 | 15,879,870 |
+| Mutex 1P/1C | 16.94 | 16.94 | 0.16 | 0.95 | 5,901,480 |
+| Mutex 2P/2C | 22.09 | 22.10 | 0.28 | 1.29 | 4,526,155 |
+| Mutex 4P/4C | 33.28 | 33.55 | 1.24 | 3.72 | 3,004,608 |
+| Mutex 8P/4C | 27.51 | 27.77 | 0.70 | 2.54 | 3,634,725 |
+
+### Metrics
+
+The benchmark reports:
+
+- Average execution time.
+- Median execution time.
+- Minimum and maximum execution time.
+- Sample standard deviation.
+- Coefficient of variation.
+- Throughput in tasks per second.
+
+### Observations
+
+- The sequential queue achieved the highest throughput in its single-threaded workload.
+- Increasing producer and consumer counts did not consistently increase throughput.
+- The 8P/4C configuration performed better than 4P/4C.
+- The 1P/1C mutex configuration had the lowest coefficient of variation.
+
+These are observations from one machine and one workload, not universal performance conclusions.
+
+### Benchmark limitations
+
+The sequential benchmark performs enqueue operations followed by dequeue operations on a single thread.
+
+The mutex benchmarks execute concurrent producer-consumer workloads.
+
+Therefore, these measurements do not provide a strictly equivalent comparison of sequential and concurrent queue operations.
+
+Additionally:
+
+- Concurrent measurements include thread creation and joining.
+- Atomic instrumentation adds overhead.
+- Operating-system scheduling and background activity can influence measurements.
+- The benchmark does not establish lock-free performance.
+
+For further details, see [`docs/benchmark-report.md`](docs/benchmark-report.md).
+
+---
+
+## Engineering Concepts
+
+ConLab explores the following systems programming concepts:
+
+**Memory management**
+- Dynamic allocation.
+- Pointer ownership.
+- Destructors.
+- Copy semantics.
+- Object lifetime.
+
+**Concurrency**
+- Shared mutable state.
+- Thread safety.
+- Mutual exclusion.
+- Condition variables.
+- Producer-consumer coordination.
+
+**Atomic operations**
+- Atomic variables.
+- Read-modify-write operations.
+- Compare-and-swap.
+- Memory ordering.
+
+**Performance engineering**
+- Workload design.
+- Throughput.
+- Execution-time measurements.
+- Statistical variability.
+- Benchmark limitations.
+
+---
+
+## Limitations
+
+ConLab is an educational implementation and experimental laboratory.
+
+Current limitations include:
+
+- The concurrent queue uses mutex-based synchronization rather than a lock-free algorithm.
+- The benchmark configurations do not all represent equivalent workloads.
+- Thread creation and joining are included in concurrent benchmark timings.
+- The current benchmark does not isolate all sources of synchronization overhead.
+- The test harness is not yet organized as a separate automated unit-testing framework.
+
+These limitations provide opportunities for future engineering improvements.
 
 ---
 
 ## Development Roadmap
 
-ConLab is being developed incrementally.
-
-### Phase 1 — Sequential Data Structures
-
-- [x] Node structure and pointer fundamentals
-- [x] Dynamic memory allocation
-- [x] Linked-list traversal
-- [x] Sequential queue class
-- [x] Constructor
-- [x] `enqueue()`
-- [x] `dequeue()`
-- [x] `is_empty()`
-- [x] Queue display
-- [ ] Destructor and RAII
-- [ ] Copy constructor
-- [ ] Copy assignment operator
-- [ ] Automated tests
-- [ ] Memory debugging
-
-### Phase 2 — Thread Safety and Synchronization
-
-- [ ] Understand threads and shared mutable state
-- [ ] Implement a mutex-protected queue
-- [ ] Explore `std::mutex`
-- [ ] Understand `std::lock_guard`
-- [ ] Explore `std::unique_lock`
-- [ ] Implement condition-variable-based waiting
-- [ ] Build producer-consumer experiments
-
-### Phase 3 — Atomic Operations
-
-- [ ] Understand atomic variables
-- [ ] Implement an atomic counter
-- [ ] Explore `fetch_add()`
-- [ ] Understand compare-and-swap
-- [ ] Experiment with `compare_exchange_weak()`
-- [ ] Experiment with `compare_exchange_strong()`
-
-### Phase 4 — Concurrency Testing
-
-- [ ] Multi-threaded queue testing
-- [ ] Producer-consumer stress testing
-- [ ] Investigate race conditions
-- [ ] Debug synchronization problems
-- [ ] Explore correctness under concurrent workloads
-
-### Phase 5 — Benchmarking and Documentation
-
-- [ ] Benchmark sequential and mutex-protected queues
-- [ ] Analyse performance under different workloads
-- [ ] Document implementation decisions
-- [ ] Record experimental results
+| Phase | Focus | Status |
+|---|---|---|
+| 1 | Sequential linked-list queue | Complete |
+| 2 | Memory management and copy semantics | Complete |
+| 3 | Mutex-protected concurrent queue | Complete |
+| 4 | Atomic counters and CAS | Complete |
+| 5 | Producer-consumer stress testing | Complete |
+| 6 | Benchmarking and statistical analysis | Complete |
+| 7 | Engineering documentation | In progress |
 
 ---
 
-## Learning Approach
+## Future Improvements
 
-ConLab follows an implementation-first learning approach.
+Potential future work includes:
 
-Each component is built incrementally:
+- Separate automated unit-testing infrastructure.
+- ThreadSanitizer experiments.
+- More controlled benchmark workloads.
+- Persistent worker threads for benchmarking.
+- Improved measurement isolation.
+- Additional queue implementations.
+- Further investigation of synchronization and memory ordering.
+
+---
+
+## Project Philosophy
+
+ConLab follows an implementation-first engineering approach:
 
 1. Understand the underlying concept.
 2. Design the data structure.
 3. Implement it from scratch.
-4. Test its behaviour.
-5. Investigate errors and edge cases.
-6. Document the engineering decisions.
+4. Test correctness.
+5. Investigate edge cases.
+6. Measure performance.
+7. Document engineering decisions.
 
-The objective is not just to implement data structures, but to develop a deeper understanding of how C++ manages memory, objects and concurrent execution.
-
----
-
-## Project Status
-
-ConLab is an ongoing learning and engineering project. The current focus is completing the sequential queue implementation, strengthening memory management and establishing correctness before introducing concurrency.
+The goal is not simply to implement concurrent data structures, but to understand the underlying memory, synchronization, and execution models.
 
 **Correctness and understanding take priority over implementation speed.**
