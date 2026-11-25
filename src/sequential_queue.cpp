@@ -5,10 +5,8 @@
 #include <stdexcept>
 
 // Default constructor
-SequentialQueue::SequentialQueue() {
-    head = nullptr;
-    tail = nullptr;
-    count = 0;
+SequentialQueue::SequentialQueue()
+    : head(nullptr), tail(nullptr), count(0) {
 }
 
 // Enqueue
@@ -54,10 +52,9 @@ int SequentialQueue::front() const {
 }
 
 // Size
-int SequentialQueue::size() const {
+std::size_t SequentialQueue::size() const {
     return count;
 }
-
 // Check if empty
 bool SequentialQueue::is_empty() const {
     return head == nullptr;
