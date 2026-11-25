@@ -9,6 +9,8 @@ add_executable(conlab
         src/main.cpp
         src/sequential_queue.cpp
         src/mutex_queue.cpp
+        src/atomic_counter.cpp
+
 )
 
 target_include_directories(conlab PRIVATE include)
