@@ -11,3 +11,8 @@ add_executable(conlab
 )
 
 target_include_directories(conlab PRIVATE include)
+
+if(APPLE)
+    target_compile_options(conlab PRIVATE -fsanitize=address -fno-omit-frame-pointer)
+    target_link_options(conlab PRIVATE -fsanitize=address)
+endif()
